@@ -2,7 +2,7 @@
 
 This document showcases the performance optimization journey of our edge AI pothole detection system, from initial laptop testing to final deployment on Raspberry Pi edge hardware.
 
-## rformance Progression
+## Performance Progression
 
 ### 1. Initial Development - Laptop Testing (25-45 FPS)
 
