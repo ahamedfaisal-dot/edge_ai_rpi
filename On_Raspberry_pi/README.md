@@ -662,13 +662,6 @@ Ahamed Faisal
 
 Sanji krishna
 
-<<<<<<< HEAD:On_Raspberry_pi/README.md
-subiksha
-=======
-Subiksha
->>>>>>> 31810ec2642afa5615cc56a1c7d458ec6ccf6cfc:README.md
-
----
 
 **Last Updated**: 2026-02-03
 
