@@ -66,7 +66,7 @@ This project implements a **real-time pothole detection system** optimized for e
                             │
                             ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│               ANOMALY DETECTION (OPTIONAL)                       │
+│               ANOMALY DETECTION (OPTIONAL)                      │
 │  ┌──────────────────────┬─────────────────────────┐             │
 │  │  Mahalanobis         │  Fallback Anomaly       │             │
 │  │  Detector            │  Detector               │             │
@@ -76,11 +76,12 @@ This project implements a **real-time pothole detection system** optimized for e
                             │
                             ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                      VISUALIZATION                               │
-│  • Bounding boxes on detected potholes                           │
-│  • Confidence scores                                             │
-│  • FPS and performance metrics                                   │
-│  • Frame counter and detection counter                           │
+│                      VISUALIZATION                              │
+│  • Bounding boxes on detected potholes                          │
+│  • Confidence scores                                            │
+│  • FPS and performance metrics                                  │
+│  • Frame counter and detection counter                          │
+│  • Timestamped event logs                                       │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
