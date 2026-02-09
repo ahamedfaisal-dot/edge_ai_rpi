@@ -25,43 +25,43 @@ This project implements a **real-time pothole detection system** optimized for e
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                         VIDEO INPUT                              │
-│                      (pothole2.mp4)                              │
+│                         VIDEO INPUT                             │
+│                      (pothole2.mp4)                             │
 └───────────────────────────┬─────────────────────────────────────┘
                             │
                             ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                   FRAME PREPROCESSING                            │
-│  • Downscale (45% of original)                                   │
-│  • Resize to 320x320 for inference                               │
-│  • BGR to RGB conversion                                         │
-│  • Normalization (0-1)                                           │
+│                   FRAME PREPROCESSING                           │
+│  • Downscale (45% of original)                                  │
+│  • Resize to 320x320 for inference                              │
+│  • BGR to RGB conversion                                        │
+│  • Normalization (0-1)                                          │
 └───────────────────────────┬─────────────────────────────────────┘
                             │
                             ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                  ONNX MODEL INFERENCE                            │
-│  • Model: best.onnx (YOLOv8-based)                               │
-│  • Input: 320x320 normalized image                               │
-│  • Output: Raw detections (bbox, confidence)                     │
-│  • Backend: CPU Execution Provider                               │
+│                  ONNX MODEL INFERENCE                           │
+│  • Model: best.onnx (YOLOv8-based)                              │
+│  • Input: 320x320 normalized image                              │
+│  • Output: Raw detections (bbox, confidence)                    │
+│  • Backend: CPU Execution Provider                              │
 └───────────────────────────┬─────────────────────────────────────┘
                             │
                             ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    POST-PROCESSING                               │
-│  • Confidence Filtering (threshold: 0.2)                         │
-│  • Bounding Box Scaling                                          │
-│  • Size Validation (10px - 1000px)                               │
-│  • Non-Maximum Suppression (IOU: 0.4)                            │
+│                    POST-PROCESSING                              │
+│  • Confidence Filtering (threshold: 0.2)                        │
+│  • Bounding Box Scaling                                         │
+│  • Size Validation (10px - 1000px)                              │
+│  • Non-Maximum Suppression (IOU: 0.4)                           │
 └───────────────────────────┬─────────────────────────────────────┘
                             │
                             ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                  TEMPORAL VOTING                                 │
-│  • Multi-frame consensus (window: 3 frames)                      │
-│  • Vote threshold: 2/3 frames                                    │
-│  • Reduces false positives                                       │
+│                  TEMPORAL VOTING                                │
+│  • Multi-frame consensus (window: 3 frames)                     │
+│  • Vote threshold: 2/3 frames                                   │
+│  • Reduces false positives                                      │
 └───────────────────────────┬─────────────────────────────────────┘
                             │
                             ▼
