@@ -41,7 +41,7 @@ This project implements a **real-time pothole detection system** optimized for e
                             ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                  ONNX MODEL INFERENCE                           │
-│  • Model: best.onnx (YOLOv8-based)                              │
+│  • Model: best.onnx (YOLOv5-based)                              │
 │  • Input: 320x320 normalized image                              │
 │  • Output: Raw detections (bbox, confidence)                    │
 │  • Backend: CPU Execution Provider                              │
