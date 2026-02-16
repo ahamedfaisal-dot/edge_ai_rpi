@@ -36,57 +36,57 @@ The first approach uses a single-stage detection pipeline with rule-based filter
 
 ```
 ┌──────────────────────────────────────────────┐
-│               DASHCAM VIDEO INPUT           │
-│          (Live stream or video file)        │
+│               DASHCAM VIDEO INPUT            │
+│          (Live stream or video file)         │
 └─────────────────────────┬────────────────────┘
                           │
                           ▼
 ┌──────────────────────────────────────────────┐
-│            ROI CROPPING (ROAD ONLY)         │
-│  • Keeps road region                        │
-│  • Removes sky and background               │
-│  • Reduces false positives                  │
+│            ROI CROPPING (ROAD ONLY)          │
+│  • Keeps road region                         │
+│  • Removes sky and background                │
+│  • Reduces false positives                   │
 └─────────────────────────┬────────────────────┘
                           │
                           ▼
 ┌──────────────────────────────────────────────┐
-│              YOLOv5n DETECTION              │
-│  • Detects known anomalies                  │
-│  • Lightweight edge model                   │
-│  • Generates candidate boxes                │
+│              YOLOv5n DETECTION               │
+│  • Detects known anomalies                   │
+│  • Lightweight edge model                    │
+│  • Generates candidate boxes                 │
 └─────────────────────────┬────────────────────┘
                           │
                           ▼
 ┌──────────────────────────────────────────────┐
-│        BOUNDING BOX RULE FILTERS            │
-│  • Confidence threshold                     │
-│  • Size filtering                           │
-│  • Position filtering                       │
-│  • Remove unrealistic detections            │
+│        BOUNDING BOX RULE FILTERS             │
+│  • Confidence threshold                      │
+│  • Size filtering                            │
+│  • Position filtering                        │
+│  • Remove unrealistic detections             │
 └─────────────────────────┬────────────────────┘
                           │
                           ▼
 ┌──────────────────────────────────────────────┐
-│        TEMPORAL VOTING (MULTI-FRAME)        │
-│  • Multi-frame confirmation                 │
-│  • Reject single-frame noise                │
-│  • Improve stability                        │
+│        TEMPORAL VOTING (MULTI-FRAME)         │
+│  • Multi-frame confirmation                  │
+│  • Reject single-frame noise                 │
+│  • Improve stability                         │
 └─────────────────────────┬────────────────────┘
                           │
                           ▼
 ┌──────────────────────────────────────────────┐
-│   FALLBACK ANOMALY DETECTOR (UNSUPERVISED)  │
-│  • Runs if YOLO finds nothing               │
-│  • Detects unknown anomalies                │
-│  • Uses statistical deviation checks        │
+│   FALLBACK ANOMALY DETECTOR (UNSUPERVISED)   │
+│  • Runs if YOLO finds nothing                │
+│  • Detects unknown anomalies                 │
+│  • Uses statistical deviation checks         │
 └─────────────────────────┬────────────────────┘
                           │
                           ▼
 ┌──────────────────────────────────────────────┐
-│        FINAL DECISION & VISUALIZATION       │
-│  • Draw bounding boxes                      │
-│  • Display FPS                              │
-│  • Show detection summary                   │
+│        FINAL DECISION & VISUALIZATION        │
+│  • Draw bounding boxes                       │
+│  • Display FPS                               │ 
+│  • Show detection summary                    │
 └──────────────────────────────────────────────┘
 ```
 
