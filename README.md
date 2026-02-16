@@ -1,191 +1,213 @@
-# Edge AI Road Anomaly Detection System (Main Branch)
+# Edge AI Road Anomaly Detection System — Main Branch (Final Optimized ONNX Pipeline)
 
 ## Project Overview
 
-This project implements a real-time road anomaly detection system designed for edge devices specially for Raspberry Pi 4. The pipeline combines deep learning–based detection with statistical fallback anomaly validation to achieve robust performance under real-world road conditions.
+This project implements a real-time road anomaly and pothole detection system optimized for edge devices, specifically Raspberry Pi 4. The pipeline combines ONNX-based deep learning detection with structured post-processing, temporal voting, and statistical fallback anomaly validation to achieve stable performance under real-world road conditions.
 
-The main branch contains the final optimized ONNX-based inference pipeline with structured preprocessing, post-processing filters, temporal voting, and optional anomaly detection.
+The main branch represents the final optimized architecture after iterative improvements over the first and second approaches, with a strong focus on speed, deployment readiness, and reduced false positives.
 
 ---
 
-## Repository Branch Structure
+## Repository Branch Evolution
 
-This repository maintains multiple branches to show the evolution of the detection pipeline.
+This repository contains multiple branches representing the evolution of the detection pipeline.
 
-### main — Final Optimized Pipeline (This Branch)
-
-- Final working and optimized implementation
+### main — Final Optimized ONNX Pipeline (This Branch)
 - ONNX Runtime–based inference
-- Structured preprocessing and post-processing
-- Temporal voting and statistical fallback detection
-- Recommended for demo, evaluation, and deployment
-
----
+- Edge-optimized preprocessing and execution
+- Structured post-processing + NMS
+- Temporal voting
+- Statistical fallback anomaly detection
+- Deployment-ready pipeline
 
 ### First_approach — Baseline Pipeline
-
-- Initial YOLO-based detection pipeline
-- ROI filtering and basic false-positive reduction
+- YOLO-based detection
+- ROI cropping + rule filters
+- Basic temporal voting
+- Unsupervised fallback
 - Minimal optimization
-- See branch README for details
-
----
 
 ### Second_approach — Multi-Stage Verification Pipeline
-
-- Enhanced pipeline with neural verification stage
-- Strong false-positive reduction design
-- Multi-stage filtering and validation
-- See branch README for details
-
----
-
-## Main Branch Processing Pipeline
-
-Video Input  
-→ Frame Preprocessing  
-→ ONNX Model Inference  
-→ Post-Processing Filters  
-→ Non-Maximum Suppression  
-→ Temporal Voting  
-→ Optional Statistical Anomaly Detection  
-→ Visualization
+- YOLO candidate generator
+- Multi-stage strict filters
+- CNN appearance verifier
+- Dual temporal voting
+- Strong false-positive reduction
+- Heavier but more strict pipeline
 
 ---
 
-## Frame Preprocessing
+## System Architecture — Main Branch
 
-Each frame is prepared before inference:
+This branch uses an ONNX-based edge inference pipeline with standardized preprocessing, structured filtering, temporal validation, and optional statistical anomaly detection.
 
-- Downscale frame for performance
-- Resize to 320×320
-- Convert BGR to RGB
-- Normalize pixel values to [0–1]
-- Convert to model input format
+### End-to-End Architecture Diagram
 
-Purpose:
-- Standardize inputs
-- Improve inference stability
-- Reduce compute cost
-
----
-
-## Model Inference
-
-- Model format: ONNX
-- Detector: YOLO-based
-- Input: 320×320 RGB image
-- Backend: ONNX Runtime (CPU provider)
-- Edge-device optimized
-
-Output:
-- Bounding boxes
-- Confidence scores
-
----
-
-## Post-Processing
-
-Raw detections are filtered using:
-
-- Confidence threshold filtering
-- Bounding box scaling to original frame
-- Bounding box size validation
-- Removal of unrealistic boxes
-
-Purpose:
-- Remove weak predictions
-- Reduce noise detections
-- Improve reliability
-
----
-
-## Non-Maximum Suppression (NMS)
-
-Removes duplicate overlapping detections.
-
-Steps:
-- Sort by confidence
-- Keep highest-confidence box
-- Remove overlapping boxes above IoU threshold
-
-Purpose:
-- Avoid duplicate boxes
-- Improve counting accuracy
+```
+┌──────────────────────────────────────────────┐
+│                  VIDEO INPUT                 │
+│              (Dashcam / File)                │
+└─────────────────────────┬────────────────────┘
+                          ▼
+┌──────────────────────────────────────────────┐
+│              FRAME PREPROCESSING             │
+│  • Downscale frame                           │
+│  • Resize to 320×320                         │
+│  • BGR → RGB conversion                      │
+│  • Normalize to [0,1]                        │
+└─────────────────────────┬────────────────────┘
+                          ▼
+┌──────────────────────────────────────────────┐
+│              ONNX MODEL INFERENCE            │
+│  • YOLO-based ONNX model                     │
+│  • CPU execution provider                    │
+│  • Candidate bounding boxes                  │
+└─────────────────────────┬────────────────────┘
+                          ▼
+┌──────────────────────────────────────────────┐
+│               POST-PROCESSING                │
+│  • Confidence filtering                      │
+│  • Box scaling to frame                      │
+│  • Size validation                           │
+│  • Non-Maximum Suppression                   │
+└─────────────────────────┬────────────────────┘
+                          ▼
+┌──────────────────────────────────────────────┐
+│               TEMPORAL VOTING                │
+│  • 3-frame window                            │
+│  • 2/3 consensus rule                        │
+│  • Flicker rejection                         │
+└─────────────────────────┬────────────────────┘
+                          ▼
+┌──────────────────────────────────────────────┐
+│        OPTIONAL ANOMALY DETECTION            │
+│  • Mahalanobis statistical detector          │
+│  • Grayscale deviation detector              │
+│  • Runs only if YOLO = no detections         │
+└─────────────────────────┬────────────────────┘
+                          ▼
+┌──────────────────────────────────────────────┐
+│                VISUALIZATION                 │
+│  • Bounding boxes                            │
+│  • Confidence scores                         │
+│  • FPS and metrics                           │
+└──────────────────────────────────────────────┘
+```
 
 ---
 
-## Temporal Voting
+## Stage Use and Purpose
 
-Multi-frame confirmation is applied.
+### Frame Preprocessing
+Standardizes every frame before inference.
 
-Configuration:
-- Window size: 3 frames
-- Required votes: 2
-
-Purpose:
-- Reduce single-frame false positives
-- Improve temporal stability
+Use:
+- Ensures model input consistency  
+- Reduces compute load  
+- Matches ONNX model expectations  
 
 ---
 
-## Optional Statistical Anomaly Detection
+### ONNX Model Inference
+Runs YOLO-based detector in ONNX Runtime.
 
-Runs only when the main detector finds no valid detections.
-
-Methods used:
-
-Mahalanobis Detector:
-- Statistical outlier detection using feature distance
-
-Grayscale Detector:
-- Brightness deviation detection using Z-score
-
-Purpose:
-- Detect unknown anomaly patterns
-- Provide fallback safety check
+Use:
+- Lightweight edge inference  
+- Faster startup and execution vs PyTorch runtime  
+- Cross-platform deployment  
 
 ---
 
-## Visualization Output
+### Post-Processing + NMS
+Cleans raw model outputs.
 
-Runtime display includes:
+Use:
+- Remove weak detections  
+- Remove unrealistic box sizes  
+- Merge duplicate overlapping boxes  
+- Improve output quality  
 
-- Bounding boxes
-- Confidence values
-- FPS counter
-- Frame counter
-- Detection counter
-- Processing time
+---
+
+### Temporal Voting
+Validates detections across frames.
+
+Use:
+- Reject single-frame noise  
+- Improve stability  
+- Reduce false positives  
+
+Rule:
+Detection must appear in at least 2 of last 3 frames.
+
+---
+
+### Statistical Fallback Anomaly Detection
+Runs only if detector finds nothing.
+
+Methods:
+- Mahalanobis distance outlier detection  
+- Grayscale Z-score deviation detection  
+
+Use:
+- Catch unknown anomaly patterns  
+- Provide backup safety layer  
+
+---
+
+## Comparison with Earlier Approaches
+
+| Aspect | First Approach | Second Approach | Main Branch |
+|---------|----------------|----------------|-------------|
+YOLO role | Final detector | Candidate generator | Candidate detector |
+Verification | Rule filters | Rule + CNN verifier | Structured filters + stats fallback |
+Temporal logic | Basic | YOLO + CNN voting | Optimized temporal voting |
+Model runtime | PyTorch | PyTorch | ONNX Runtime |
+False positive control | Moderate | Very strict | Strong + efficient |
+Edge performance | Low | Moderate | Optimized |
+Deployment readiness | Limited | Moderate | High |
+
+---
+
+## Key Achievements and Performance Progress
+
+| Test Phase | Hardware | FPS | Performance vs Laptop | Notes |
+|-------------|------------|------|------------------------|-------|
+Development | Laptop | 25–45 | 100% baseline | Optimal conditions |
+Initial Edge | Raspberry Pi | 1 | ~2% | Unoptimized |
+First Optimization | Raspberry Pi | 4 | ~9% | 4× improvement |
+Final Optimization | Raspberry Pi | 7 | ~16% | 7× improvement |
+Real-World Test | Raspberry Pi | ~7 | ~16% | Field validated |
 
 ---
 
 ## Performance Targets
 
-Target hardware: Raspberry Pi class edge devices
-
-Typical performance:
-
-- Target FPS: 5
-- Processing time: ~50–100 ms per frame
-- Inference resolution: 320×320
+- Target platform: Raspberry Pi 4  
+- Target FPS: 5+  
+- Typical FPS achieved: ~7  
+- Inference size: 320×320  
+- Processing time: ~50–100 ms/frame  
 
 Optimizations include:
-
-- Frame downscaling
-- ONNX Runtime execution
-- CPU-friendly configuration
+- Frame downscaling  
+- Small inference resolution  
+- ONNX Runtime execution  
+- CPU thread tuning  
 
 ---
 
 ## File Structure
 
+```
 onnx/
-- best.onnx
-- runvid.py
-- mahalanobis_detector.py
-- fallback_anomaly.py
-- sample video files
+  best.onnx
+  runvid.py
+  mahalanobis_detector.py
+  fallback_anomaly.py
+  pothole2.mp4
+README.md
+```
 
 ---
 
@@ -193,41 +215,29 @@ onnx/
 
 Install dependencies:
 
+```
 pip install opencv-python numpy onnxruntime
+```
 
 Optional GPU runtime:
 
+```
 pip install onnxruntime-gpu
+```
 
 ---
 
 ## Usage
 
-Run the pipeline:
+Run detection:
 
+```
 python runvid.py
+```
 
 Controls:
-
-- Press q to exit
-- Ctrl+C for termination
-
----
-
-## Use Cases
-
-- Road infrastructure monitoring
-- Edge AI vision systems
-- Smart transportation analytics
-- Real-time anomaly detection research
-
----
-
-## Notes
-
-- Training code and dataset are not included
-- Earlier designs are documented in other branches
-- See branch-specific READMEs for approach details
+- Press q to quit
+- Ctrl+C to stop safely
 
 ---
 
@@ -238,4 +248,4 @@ Sanji Krishna M P
 Subiksha A
 
 Project Status: Active Development  
-Target Platform: Edge Devices
+Target Platform: Raspberry Pi 4
