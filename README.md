@@ -55,45 +55,66 @@ Video Input
 
 ## Architecture Diagram
 
-```
-VIDEO INPUT
-   │
-   ▼
-FRAME PREPROCESSING
-• Downscale (45%)
-• Resize to 320×320
-• BGR → RGB
-• Normalize [0,1]
-   │
-   ▼
-ONNX MODEL INFERENCE
-• YOLO-based ONNX model
-• CPU execution provider
-• Raw detections
-   │
-   ▼
-POST-PROCESSING
-• Confidence filtering
-• Bounding box scaling
-• Size validation
-• NMS
-   │
-   ▼
-TEMPORAL VOTING
-• 3-frame window
-• 2/3 consensus
-   │
-   ▼
-OPTIONAL ANOMALY DETECTION
-• Mahalanobis detector
-• Grayscale Z-score detector
-   │
-   ▼
-VISUALIZATION
-• Boxes + scores
-• FPS + metrics
-```
+## Main Pipeline Architecture — ONNX Edge Inference Flow
 
+```
+┌──────────────────────────────────────────────┐
+│                  VIDEO INPUT                 │
+│         Dashcam stream / recorded file       │
+└─────────────────────────┬────────────────────┘
+                          │
+                          ▼
+┌──────────────────────────────────────────────┐
+│              FRAME PREPROCESSING             │
+│  • Downscale to 45% for speed                │
+│  • Resize to 320 × 320                       │
+│  • Convert BGR → RGB                         │
+│  • Normalize pixel range to [0, 1]           │
+└─────────────────────────┬────────────────────┘
+                          │
+                          ▼
+┌──────────────────────────────────────────────┐
+│              ONNX MODEL INFERENCE            │
+│  • YOLO-based ONNX detector                  │
+│  • CPU execution provider                    │
+│  • Produces raw bounding boxes               │
+│    and confidence scores                     │
+└─────────────────────────┬────────────────────┘
+                          │
+                          ▼
+┌──────────────────────────────────────────────┐
+│               POST-PROCESSING                │
+│  • Confidence threshold filtering            │
+│  • Scale boxes to frame size                 │
+│  • Bounding box size validation              │
+│  • Non-Maximum Suppression (NMS)             │
+└─────────────────────────┬────────────────────┘
+                          │
+                          ▼
+┌──────────────────────────────────────────────┐
+│               TEMPORAL VOTING                │
+│  • Sliding window: 3 frames                  │
+│  • Consensus rule: 2 / 3                     │
+│  • Rejects single-frame noise                │
+└─────────────────────────┬────────────────────┘
+                          │
+                          ▼
+┌──────────────────────────────────────────────┐
+│        OPTIONAL ANOMALY VALIDATION           │
+│  • Mahalanobis distance detector             │
+│  • Grayscale Z-score detector                │
+│  • Activated only if YOLO = no detections    │
+└─────────────────────────┬────────────────────┘
+                          │
+                          ▼
+┌──────────────────────────────────────────────┐
+│                 VISUALIZATION                │
+│  • Draw bounding boxes                       │
+│  • Show confidence values                    │
+│  • Display FPS and timing metrics            │
+│  • Detection counters and logs               │
+└──────────────────────────────────────────────┘
+```
 ---
 
 # Stage Explanations and Use Cases
