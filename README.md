@@ -20,29 +20,98 @@ The pipeline is designed so that early stages are permissive and later stages ar
 
 ---
 
-## Architecture (Second Approach)
+## System Architecture — Second Approach (Multi-Stage Verification Pipeline)
+
+This branch implements a multi-stage verification architecture designed to aggressively reduce false positives while maintaining strong anomaly detection performance on edge devices.
+
+### Processing Pipeline Diagram
 
 ```
-Dashcam Video
-    ↓
-ROI Cropping (road-only region)
-    ↓
-YOLOv5 Candidate Detection
-    ↓
-Multi-Stage Bounding Box Filters
-    ↓
-YOLO Temporal Voting
-    ↓
-CNN Appearance Verifier
-    ↓
-CNN Temporal Voting
-    ↓
-Fallback Anomaly Detector (only if no valid detections)
-    ↓
-Final Decision and Visualization
+┌──────────────────────────────────────────────┐
+│               DASHCAM VIDEO INPUT            │
+│          (Live stream or video file)         │
+└─────────────────────────┬────────────────────┘
+                          │
+                          ▼
+┌──────────────────────────────────────────────┐
+│            ROI CROPPING (ROAD ONLY)          │
+│  • Restrict processing to road region        │
+│  • Remove sky and background objects         │
+│  • Reduce irrelevant detections              │
+└─────────────────────────┬────────────────────┘
+                          │
+                          ▼
+┌──────────────────────────────────────────────┐
+│          YOLOv5 CANDIDATE DETECTOR           │
+│  • Generates anomaly candidates              │
+│  • High recall, permissive stage             │
+│  • Not final decision maker                  │
+└─────────────────────────┬────────────────────┘
+                          │
+                          ▼
+┌──────────────────────────────────────────────┐
+│       MULTI-STAGE BOUNDING BOX FILTERS       │
+│  • Size and area checks                      │
+│  • Position constraints                      │
+│  • Aspect ratio filtering                    │
+│  • Border rejection                          │
+│  • Inter-frame stability checks              │
+│  • Remove unrealistic boxes                  │
+└─────────────────────────┬────────────────────┘
+                          │
+                          ▼
+┌──────────────────────────────────────────────┐
+│            YOLO TEMPORAL VOTING              │
+│  • Multi-frame confirmation                  │
+│  • Suppress single-frame noise               │ 
+│  • Require repeated detections               │
+└─────────────────────────┬────────────────────┘
+                          │
+                          ▼
+┌──────────────────────────────────────────────┐
+│          CNN APPEARANCE VERIFIER             │
+│  • Texture and appearance validation         │
+│  • Confirms pothole-like visual pattern      │
+│  • Second-stage semantic check               │
+└─────────────────────────┬────────────────────┘
+                          │
+                          ▼
+┌──────────────────────────────────────────────┐
+│             CNN TEMPORAL VOTING              │
+│  • Multi-frame CNN agreement                 │
+│  • Reject unstable classifications           │
+│  • Improve decision stability                │
+└─────────────────────────┬────────────────────┘
+                          │
+                          ▼
+┌──────────────────────────────────────────────┐
+│   FALLBACK ANOMALY DETECTOR (UNSUPERVISED)   │
+│  • Runs only if no valid detections          │
+│  • Detects unknown anomaly patterns          │
+│  • Statistical and texture deviation         │
+│  • Temporal + cooldown safeguards            │
+└─────────────────────────┬────────────────────┘
+                          │
+                          ▼
+┌──────────────────────────────────────────────┐
+│        FINAL DECISION & VISUALIZATION        │
+│  • Draw verified bounding boxes              │
+│  • Show confidence and metrics               │
+│  • Display stable detections only            │
+└──────────────────────────────────────────────┘
 ```
 
----
+### Stage Summary
+
+- ROI cropping restricts analysis to the road surface  
+- YOLOv5 proposes candidate anomaly regions  
+- Multi-stage filters remove geometrically invalid detections  
+- YOLO temporal voting removes transient noise  
+- CNN verifier confirms visual appearance  
+- CNN temporal voting stabilizes classification  
+- Fallback detector handles unseen anomaly types  
+- Final stage displays only verified detections
+
 
 ## Design Rationale (Conceptual Analogy)
 
