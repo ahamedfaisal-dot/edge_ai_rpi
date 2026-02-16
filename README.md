@@ -1,4 +1,4 @@
-# Road Anomaly Detection on Edge — First Approach
+# Road Anomaly Detection on Edge — First Approach (Baseline Pipeline)
 
 ## Project Overview
 
@@ -10,61 +10,107 @@ This version represents the baseline architecture before later optimization and 
 
 ## Objectives
 
-- Achieve at least 5 FPS on Raspberry Pi 4
-- Minimize false positives
-- Detect both known and previously unseen road anomalies
-- Maintain a lightweight, edge-friendly pipeline
+- Achieve at least 5 FPS on Raspberry Pi 4  
+- Reduce false positives  
+- Detect both known and previously unseen road anomalies  
+- Maintain a lightweight, edge-friendly pipeline  
 
 ---
 
 ## Technologies Used
 
-- Python 3
-- YOLOv5n (primary detector)
-- OpenCV
-- PyTorch
-- NumPy
+- Python 3  
+- YOLOv5n (primary detector)  
+- OpenCV  
+- PyTorch  
+- NumPy  
 - Raspberry Pi 4 (target platform)
 
 ---
 
-## System Architecture
+## System Architecture — First Approach
 
-The first approach uses a single-stage detection pipeline with rule-based filtering and temporal validation.
+The first approach uses a single-stage detection pipeline with rule-based filtering, temporal validation, and an unsupervised fallback detector.
 
-Processing flow:
+### Processing Pipeline Diagram
 
-Dashcam Video Input  
-→ ROI Cropping (road-only region)  
-→ YOLOv5n Detection  
-→ Bounding Box Size and Position Filters  
-→ Multi-Frame Temporal Voting  
-→ Fallback Unsupervised Anomaly Detector  
-→ Final Decision and Visualization
+```
+┌──────────────────────────────────────────────┐
+│               DASHCAM VIDEO INPUT           │
+│          (Live stream or video file)        │
+└─────────────────────────┬────────────────────┘
+                          │
+                          ▼
+┌──────────────────────────────────────────────┐
+│            ROI CROPPING (ROAD ONLY)         │
+│  • Keeps road region                        │
+│  • Removes sky and background               │
+│  • Reduces false positives                  │
+└─────────────────────────┬────────────────────┘
+                          │
+                          ▼
+┌──────────────────────────────────────────────┐
+│              YOLOv5n DETECTION              │
+│  • Detects known anomalies                  │
+│  • Lightweight edge model                   │
+│  • Generates candidate boxes                │
+└─────────────────────────┬────────────────────┘
+                          │
+                          ▼
+┌──────────────────────────────────────────────┐
+│        BOUNDING BOX RULE FILTERS            │
+│  • Confidence threshold                     │
+│  • Size filtering                           │
+│  • Position filtering                       │
+│  • Remove unrealistic detections            │
+└─────────────────────────┬────────────────────┘
+                          │
+                          ▼
+┌──────────────────────────────────────────────┐
+│        TEMPORAL VOTING (MULTI-FRAME)        │
+│  • Multi-frame confirmation                 │
+│  • Reject single-frame noise                │
+│  • Improve stability                        │
+└─────────────────────────┬────────────────────┘
+                          │
+                          ▼
+┌──────────────────────────────────────────────┐
+│   FALLBACK ANOMALY DETECTOR (UNSUPERVISED)  │
+│  • Runs if YOLO finds nothing               │
+│  • Detects unknown anomalies                │
+│  • Uses statistical deviation checks        │
+└─────────────────────────┬────────────────────┘
+                          │
+                          ▼
+┌──────────────────────────────────────────────┐
+│        FINAL DECISION & VISUALIZATION       │
+│  • Draw bounding boxes                      │
+│  • Display FPS                              │
+│  • Show detection summary                   │
+└──────────────────────────────────────────────┘
+```
 
 ---
 
-## Key Design Features
+## Detection Strategy
 
-### Hybrid Detection Strategy
 The system combines:
-- Supervised detection using YOLOv5n for known anomaly types
-- Unsupervised fallback detection for unknown anomalies
 
-This allows detection beyond only trained classes.
+- Supervised detection using YOLOv5n for known anomaly classes  
+- Unsupervised fallback detection for unknown anomaly patterns  
+
+This allows the pipeline to detect anomalies beyond only trained categories.
 
 ---
 
-## False Positive Reduction Techniques
+## False Positive Reduction Methods
 
-The following controls are applied to reduce incorrect detections:
-
-- Road-only ROI cropping to remove sky and roadside regions
-- YOLO confidence threshold filtering
-- Bounding box size filtering
-- Bounding box position filtering
-- Multi-frame temporal voting
-- Fallback anomaly verification
+- Road-only ROI cropping  
+- YOLO confidence threshold filtering  
+- Bounding box size filtering  
+- Bounding box position filtering  
+- Multi-frame temporal voting  
+- Fallback anomaly verification  
 
 ---
 
@@ -72,17 +118,17 @@ The following controls are applied to reduce incorrect detections:
 
 ```
 yolov5/        YOLOv5 framework
-inference/     Real-time detection pipeline
+inference/     Detection pipeline scripts
 best.pt        Trained YOLOv5n weights
 requirements.txt
-README.html    Project documentation
+README.html
 ```
 
 ---
 
-## Setup Instructions
+## Setup
 
-Clone the repository:
+Clone repository:
 
 ```bash
 git clone <your-repo-link>
@@ -97,52 +143,29 @@ pip install -r requirements.txt
 
 Place model weights:
 
-Put `best.pt` inside:
-
 ```
-yolov5/runs/train/road_anomaly_yolov5n_final/weights/
+yolov5/runs/train/road_anomaly_yolov5n_final/weights/best.pt
 ```
 
 ---
 
 ## Running Inference
 
-Navigate to the inference folder:
-
 ```bash
 cd inference
-```
-
-Run detection:
-
-```bash
 python detect_video.py
 ```
 
-Controls:
-
-- Press Q to exit the display window
-
----
-
-## Output
-
-The system provides:
-
-- Real-time bounding boxes on detected anomalies
-- YOLO-confirmed anomalies highlighted separately
-- Fallback-detected anomalies highlighted separately
-- FPS counter
-- Detection summary printed in the terminal
+Press `Q` to exit the display window.
 
 ---
 
 ## Notes
 
-This branch represents the baseline version of the project pipeline.  
-Later branches introduce additional verification stages and stronger false-positive reduction mechanisms.
+This branch contains the baseline pipeline.  
+Later branches introduce multi-stage verification and stronger false-positive reduction mechanisms.
 
-Refer to the main branch and second approach branch for the optimized and multi-stage verification architectures.
+Refer to the main branch and second approach branch for optimized and advanced architectures.
 
 ---
 
