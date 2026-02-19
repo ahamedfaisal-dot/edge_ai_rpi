@@ -129,11 +129,11 @@ python run_with_pi_cam.py
                             ▼
 ┌──────────────────────────────────────────────────────────────────┐
 │                   FRAME READING (read_frame)                     │
-│  • FRAME_BYTES = 640 × 480 × 3 // 2  (YUV420 I420 layout)       │
+│  • FRAME_BYTES = 640 × 480 × 3 // 2  (YUV420 I420 layout)        │
 │  • Uses readinto loop into a fixed bytearray buffer              │
 │  • Guarantees exactly one full frame per call                    │
 │  • Returns None if pipe closes (triggers clean shutdown)         │
-│  • Converts: YUV420 → BGR via cv2.COLOR_YUV2BGR_I420            │
+│  • Converts: YUV420 → BGR via cv2.COLOR_YUV2BGR_I420             │
 └───────────────────────────┬──────────────────────────────────────┘
                             │  BGR frame (480 × 640 × 3)
                             ▼
@@ -152,14 +152,14 @@ python run_with_pi_cam.py
 │     using INTER_NEAREST                                          │
 │  2. BGR → RGB  (flip channel axis [::-1])                        │
 │  3. HWC → CHW  (transpose to PyTorch tensor layout)              │
-│  4. uint8 → float32,  divide by 255  → [0.0, 1.0]               │
+│  4. uint8 → float32,  divide by 255  → [0.0, 1.0]                │
 │  5. Add batch dim: shape becomes (1, 3, 320, 320)                │
 └───────────────────────────┬──────────────────────────────────────┘
                             │
                             ▼
 ┌──────────────────────────────────────────────────────────────────┐
 │                   YOLOv5 ONNX INFERENCE                          │
-│  • Model file  : best.onnx  (YOLOv5, exported to ONNX)          │
+│  • Model file  : best.onnx  (YOLOv5, exported to ONNX)           │
 │  • Provider    : CPUExecutionProvider                            │
 │  • intra_op_num_threads = 4  (all 4 RPi4 cores)                  │
 │  • inter_op_num_threads = 1                                      │
@@ -179,7 +179,7 @@ python run_with_pi_cam.py
 │                                                                  │
 │  Filter 2 — Scale & convert:                                     │
 │    sx = frame_w / 320,  sy = frame_h / 320                       │
-│    Convert centre-format → corners (x1, y1, x2, y2)             │
+│    Convert centre-format → corners (x1, y1, x2, y2)              │
 │    Clamp to frame boundary                                       │
 │                                                                  │
 │  Filter 3 — Size:                                                │
@@ -201,7 +201,7 @@ python run_with_pi_cam.py
 │                  NON-MAXIMUM SUPPRESSION (nms)                   │
 │  • Sort boxes by confidence (descending)                         │
 │  • Greedy pick: always keep the highest-confidence box           │
-│  • Remove overlapping boxes where IoU > IOU_THRES (0.4)         │
+│  • Remove overlapping boxes where IoU > IOU_THRES (0.4)          │
 │  • Repeat until box list is empty                                │
 │                                                                  │
 │    IoU = Intersection Area / Union Area                          │
@@ -225,9 +225,9 @@ python run_with_pi_cam.py
                 │                          │
                 ▼                          ▼
 ┌──────────────────────────┐  ┌────────────────────────────────────┐
-│    VISUALISATION (draw)  │  │    DETECTION LOGGING (log_detection)│
+│    VISUALISATION (draw)  │  │   DETECTION LOGGING (log_detection)│
 │                          │  │                                    │
-│ • Green boxes on frame   │  │ Triggered only when BOTH:           │
+│ • Green boxes on frame   │  │ Triggered only when BOTH:          │
 │   for every detection    │  │   confirmed=True AND detections>0  │
 │ • "POTHOLE X.XX" label   │  │                                    │
 │   above each box         │  │ Outputs:                           │
@@ -247,7 +247,7 @@ python run_with_pi_cam.py
                             ▼
 ┌──────────────────────────────────────────────────────────────────┐
 │                       FPS THROTTLE                               │
-│  • TARGET_FRAME_TIME = 1.0 / 5 = 200 ms                         │
+│  • TARGET_FRAME_TIME = 1.0 / 5 = 200 ms                          │
 │  • Sleep remainder after each loop iteration                     │
 │  • cv2.waitKey handles both sleep and key press check            │
 │  • Console log every 2 seconds: frame/fps/proc/detections        │
@@ -257,7 +257,7 @@ python run_with_pi_cam.py
                             ▼
 ┌──────────────────────────────────────────────────────────────────┐
 │                    CLEAN SHUTDOWN (finally)                      │
-│  1. cam_proc.terminate() + cam_proc.wait()  — kill rpicam-vid   │
+│  1. cam_proc.terminate() + cam_proc.wait()  — kill rpicam-vid    │
 │  2. cv2.destroyAllWindows()                                      │
 │  3. Flush SQLite buffer, close CSV file                          │
 │  4. Write summary_<SESSION>.json                                 │
@@ -271,7 +271,7 @@ python run_with_pi_cam.py
 
 | Parameter            | Value  | Description                                     |
 | -------------------- | ------ | ----------------------------------------------- |
-| `TARGET_FPS`         | 5      | Frames per second cap (RPi CPU optimised)        |
+| `TARGET_FPS`         | 5      | Frames per second cap (RPi CPU optimised)       |
 | `FRAME_SCALE`        | 0.45   | Pre-inference downscale ratio                   |
 | `CONF_THRES`         | **0.40** | Min confidence — raised from 0.20 to cut FPs  |
 | `IOU_THRES`          | 0.4    | NMS IoU overlap threshold                       |
@@ -311,7 +311,7 @@ python run_with_pi_cam.py
 | Architecture        | **YOLOv5**                                   |
 | Model file          | `best.onnx`                                  |
 | Input tensor        | `(1, 3, 320, 320)` float32 RGB               |
-| Output tensor       | `(1, N, ≥5)` — (x_c, y_c, w, h, conf, …)   |
+| Output tensor       | `(1, N, ≥5)` — (x_c, y_c, w, h, conf, …)     |
 | Detector class      | Pothole / road anomaly                       |
 | Export format       | ONNX opset 12+                               |
 | Inference runtime   | ONNX Runtime CPU                             |
@@ -321,8 +321,8 @@ python run_with_pi_cam.py
 
 ## Component Responsibilities
 
-| Section                  | Responsibility                                                     |
-| ------------------------ | ------------------------------------------------------------------ |
+| Section                  | Responsibility                                                    |
+| ------------------------ | ----------------------------------------------------------------- |
 | **rpicam-vid launch**    | Spawn subprocess, pipe YUV420 stdout, verify it started           |
 | **`read_frame()`**       | Blocking readinto loop → YUV2BGR → return BGR frame               |
 | **ONNX session setup**   | Load best.onnx, 4-thread CPU, full graph optimisation             |
@@ -332,7 +332,7 @@ python run_with_pi_cam.py
 | **`MultiFrameVoter`**    | 3-frame sliding-window majority vote (from `temporal_voting.py`)  |
 | **`log_detection()`**    | Write to CSV, buffer SQLite rows, save JPEG snapshot              |
 | **`log_session_end()`**  | Flush DB, close CSV, write JSON summary                           |
-| **Main loop**            | Capture → downscale → infer → filter → vote → draw → HUD → pace  |
+| **Main loop**            | Capture → downscale → infer → filter → vote → draw → HUD → pace   |
 | **`finally` block**      | Kill rpicam-vid, close windows, flush all logs, print stats       |
 
 ---
@@ -371,15 +371,15 @@ Every run creates a unique `SESSION_ID = YYYYMMDD_HHMMSS` and writes:
 
 | Technique              | Detail                                                         |
 | ---------------------- | -------------------------------------------------------------- |
-| Frame downscale 0.45   | Reduces pixels ~80% before inference                          |
+| Frame downscale 0.45   | Reduces pixels ~80% before inference                           |
 | INTER_NEAREST          | Fastest OpenCV resize interpolation                            |
-| Input size 320         | ~4× fewer FLOPs vs default YOLOv5 640                         |
-| 4 CPU threads          | Saturates all RPi4 cores via `intra_op_num_threads`           |
+| Input size 320         | ~4× fewer FLOPs vs default YOLOv5 640                          |
+| 4 CPU threads          | Saturates all RPi4 cores via `intra_op_num_threads`            |
 | Sequential exec mode   | Avoids thread-switching overhead                               |
 | Full graph opt         | ONNX Runtime fuses and optimises compute graph                 |
 | FPS cap (5)            | Prevents CPU spinning; paced via cv2.waitKey                   |
 | Pipe buffer × 4        | Prevents rpicam-vid pipe stalls                                |
-| SQLite WAL + buffer    | Batches DB writes every 10 rows — avoids per-frame I/O        |
+| SQLite WAL + buffer    | Batches DB writes every 10 rows — avoids per-frame I/O         |
 | Rolling 10-frame avg   | FPS/proc-time stats without unbounded memory                   |
 
 ---
