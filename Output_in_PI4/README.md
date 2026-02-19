@@ -57,7 +57,7 @@ To validate the system's real-world applicability, we conducted field testing by
 
 **Field Test Output:**
 
-- 📹 [View Real-World Bike Testing Video (Google Drive)](PASTE_BIKE_TEST_VIDEO_LINK_HERE)
+- 📹 [View Real-World Bike Testing Video (Google Drive)](https://drive.google.com/file/d/1fmIOCZe0yc1K5nB2kklY15GKl-EBwTE5/view?usp=sharing)
 
 ---
 
@@ -69,7 +69,7 @@ To validate the system's real-world applicability, we conducted field testing by
 | Initial Edge       | Raspberry Pi | 1     | ~2% of laptop         | Unoptimized        |
 | First Optimization | Raspberry Pi | 4     | ~9% of laptop         | 4x improvement     |
 | Final Optimization | Raspberry Pi | 7     | ~16% of laptop        | 7x improvement     |
-| Real-World Test    | Raspberry Pi | ~7    | ~16% of laptop        | Field validated    |
+| Real-World Test    | Raspberry Pi | ~8    | ~16% of laptop        | Field validated    |
 
 ## Notes
 
