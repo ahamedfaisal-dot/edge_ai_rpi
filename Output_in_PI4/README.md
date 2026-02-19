@@ -10,7 +10,7 @@ During the initial development phase, we tested the AI model on a laptop to esta
 
 **Demo Output:**
 
-- 📹 [View Laptop Performance Video (Google Drive)](PASTE_LAPTOP_VIDEO_LINK_HERE)
+- 📹 [View Laptop Performance Video (Google Drive)](https://drive.google.com/file/d/1tuFs8f_KjfSUI5VHKQDSmJbHvGje8tMz/view?usp=sharing)
 
 ---
 
