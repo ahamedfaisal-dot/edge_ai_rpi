@@ -16,7 +16,7 @@ During the initial development phase, we tested the AI model on a laptop to esta
 
 ### 2. First Edge Deployment - Raspberry Pi (1 FPS)
 
-When we first deployed the model to the Raspberry Pi edge device without optimization, the performance dropped significantly to **1 FPS**. This highlighted the computational constraints of edge hardware and the need for optimization.
+When we first deployed the model to the Raspberry Pi edge device without optimization(converted pytorch model to onnx with image parameter 640), the performance dropped significantly to **1 FPS**. This highlighted the computational constraints of edge hardware and the need for optimization.
 
 **Demo Output:**
 
@@ -26,7 +26,7 @@ When we first deployed the model to the Raspberry Pi edge device without optimiz
 
 ### 3. First Optimization - Improved Edge Performance (4 FPS)
 
-After implementing initial optimizations (model quantization, inference optimizations, etc.), we achieved a **4x performance improvement** to **4 FPS**. This showed promising results but still required further enhancement for real-time applications.
+After implementing initial optimizations (model quantization(converted pytorch model to onnx with image parameter 480), inference optimizations, etc.), we achieved a **4x performance improvement** to **4 FPS**. This showed promising results but still required further enhancement for real-time applications.
 
 **Demo Output:**
 
@@ -36,7 +36,7 @@ After implementing initial optimizations (model quantization, inference optimiza
 
 ### 4. Final Optimization - Production Edge Deployment (7 FPS)
 
-Through comprehensive optimization strategies including:
+Through comprehensive optimization(converted pytorch model to onnx with image parameter 360) strategies including:
 
 - Advanced model quantization
 - Efficient preprocessing pipelines
