@@ -10,7 +10,7 @@ The main branch represents the final optimized pipeline after multiple architect
 
 ## Branch Evolution Summary
 
-This repository contains three major pipeline stages:
+This repository contains three major pipeline stages across different branches:
 
 **First_approach — Baseline**
 - YOLO detection + ROI cropping
@@ -34,86 +34,185 @@ This repository contains three major pipeline stages:
 - Statistical anomaly fallback
 - Edge deployment optimized
 
+> **Output videos and performance results from all pipeline stages running on Raspberry Pi 4 hardware are documented in the [`Output_in_PI4/`](./Output_in_PI4/README.md) folder.**
+
 ---
 
-# System Architecture — Main Branch
+# System Architecture — Final Pi Camera Pipeline
+
+The architecture below reflects the **live Pi Camera deployment** (`run_with_pi_cam.py`) inside [`Final_Output_With_PI4_Cam_on_realworld/`](./Final_Output_With_PI4_Cam_on_realworld/README.md), which is the fully field-validated pipeline running on Raspberry Pi 4 with a real camera feed.
 
 ## High-Level Pipeline
 
 ```
-Video Input
-   → Frame Preprocessing
-   → ONNX Model Inference
-   → Post-Processing Filters
-   → Non-Maximum Suppression
+rpicam-vid (subprocess)
+   → YUV420 stdout pipe
+   → YUV → BGR conversion
+   → Frame Downscaling
+   → Preprocessing (resize / normalise)
+   → YOLOv5 ONNX Inference
+   → Post-Processing (conf + area + aspect filters)
+   → NMS
    → Temporal Voting
-   → Optional Statistical Anomaly Detection
-   → Visualization
+   → Visualisation + Logging (log / CSV / SQLite / JSON / JPEG)
 ```
 
 ---
 
-## Architecture Diagram
-
-## Main Pipeline Architecture — ONNX Edge Inference Flow
+## Architecture Diagram — Full Detailed Pipeline
 
 ```
-┌──────────────────────────────────────────────┐
-│                  VIDEO INPUT                 │
-│         Dashcam stream / recorded file       │
-└─────────────────────────┬────────────────────┘
-                          │
-                          ▼
-┌──────────────────────────────────────────────┐
-│              FRAME PREPROCESSING             │
-│  • Downscale to 45% for speed                │
-│  • Resize to 320 × 320                       │
-│  • Convert BGR → RGB                         │
-│  • Normalize pixel range to [0, 1]           │
-└─────────────────────────┬────────────────────┘
-                          │
-                          ▼
-┌──────────────────────────────────────────────┐
-│              ONNX MODEL INFERENCE            │
-│  • YOLO-based ONNX detector                  │
-│  • CPU execution provider                    │
-│  • Produces raw bounding boxes               │
-│    and confidence scores                     │
-└─────────────────────────┬────────────────────┘
-                          │
-                          ▼
-┌──────────────────────────────────────────────┐
-│               POST-PROCESSING                │
-│  • Confidence threshold filtering            │
-│  • Scale boxes to frame size                 │
-│  • Bounding box size validation              │
-│  • Non-Maximum Suppression (NMS)             │
-└─────────────────────────┬────────────────────┘
-                          │
-                          ▼
-┌──────────────────────────────────────────────┐
-│               TEMPORAL VOTING                │
-│  • Sliding window: 3 frames                  │
-│  • Consensus rule: 2 / 3                     │
-│  • Rejects single-frame noise                │
-└─────────────────────────┬────────────────────┘
-                          │
-                          ▼
-┌──────────────────────────────────────────────┐
-│        OPTIONAL ANOMALY VALIDATION           │
-│  • Mahalanobis distance detector             │
-│  • Grayscale Z-score detector                │
-│  • Activated only if YOLO = no detections    │
-└─────────────────────────┬────────────────────┘
-                          │
-                          ▼
-┌──────────────────────────────────────────────┐
-│                 VISUALIZATION                │
-│  • Draw bounding boxes                       │
-│  • Show confidence values                    │
-│  • Display FPS and timing metrics            │
-│  • Detection counters and logs               │
-└──────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│                   rpicam-vid SUBPROCESS                          │
+│  Command:                                                        │
+│    rpicam-vid --width 640 --height 480                           │
+│               --framerate 5 --codec yuv420                       │
+│               --nopreview --timeout 0 --output -                 │
+│                                                                  │
+│  • Launched via subprocess.Popen                                 │
+│  • Raw YUV420 (I420) data written to stdout pipe                 │
+│  • Uses libcamera driver — works with Pi Camera v2               │
+│  • 2-second warm-up after launch before reading starts           │
+│  • Exits if rpicam-vid process terminates unexpectedly           │
+└───────────────────────────┬──────────────────────────────────────┘
+                            │  stdout pipe (YUV420 bytes)
+                            ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                   FRAME READING (read_frame)                     │
+│  • FRAME_BYTES = 640 × 480 × 3 // 2  (YUV420 I420 layout)        │
+│  • Uses readinto loop into a fixed bytearray buffer              │
+│  • Guarantees exactly one full frame per call                    │
+│  • Returns None if pipe closes (triggers clean shutdown)         │
+│  • Converts: YUV420 → BGR via cv2.COLOR_YUV2BGR_I420             │
+└───────────────────────────┬──────────────────────────────────────┘
+                            │  BGR frame (480 × 640 × 3)
+                            ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                      FRAME DOWNSCALING                           │
+│  • Scale factor: FRAME_SCALE = 0.45                              │
+│    640 → ~288 px wide,  480 → ~216 px tall                       │
+│  • Interpolation: INTER_NEAREST (fastest on RPi CPU)             │
+│  • Reduces pixel count ~80% before inference                     │
+└───────────────────────────┬──────────────────────────────────────┘
+                            │
+                            ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                     PREPROCESSING (preprocess)                   │
+│  1. Resize to 320×320  (INFER_SIZE × INFER_SIZE)                 │
+│     using INTER_NEAREST                                          │
+│  2. BGR → RGB  (flip channel axis [::-1])                        │
+│  3. HWC → CHW  (transpose to PyTorch tensor layout)              │
+│  4. uint8 → float32,  divide by 255  → [0.0, 1.0]                │
+│  5. Add batch dim: shape becomes (1, 3, 320, 320)                │
+└───────────────────────────┬──────────────────────────────────────┘
+                            │
+                            ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                   YOLOv5 ONNX INFERENCE                          │
+│  • Model file  : best.onnx  (YOLOv5, exported to ONNX)           │
+│  • Provider    : CPUExecutionProvider                            │
+│  • intra_op_num_threads = 4  (all 4 RPi4 cores)                  │
+│  • inter_op_num_threads = 1                                      │
+│  • Execution mode : ORT_SEQUENTIAL                               │
+│  • Graph opt level: ORT_ENABLE_ALL                               │
+│  • Output shape: (1, N, ≥5)                                      │
+│    Each row = [x_centre, y_centre, width, height, conf, cls...]  │
+└───────────────────────────┬──────────────────────────────────────┘
+                            │
+                            ▼
+┌──────────────────────────────────────────────────────────────────┐
+│              POST-PROCESSING + FILTERS (postprocess)             │
+│                                                                  │
+│  Filter 1 — Confidence:                                          │
+│    Discard if conf < CONF_THRES (0.40)                           │
+│    (raised from 0.20 to eliminate weak false positives)          │
+│                                                                  │
+│  Filter 2 — Scale & convert:                                     │
+│    sx = frame_w / 320,  sy = frame_h / 320                       │
+│    Convert centre-format → corners (x1, y1, x2, y2)              │
+│    Clamp to frame boundary                                       │
+│                                                                  │
+│  Filter 3 — Size:                                                │
+│    Discard if box width or height < 10 px or > 1000 px           │
+│                                                                  │
+│  Filter 4 — Area ratio:                                          │
+│    Discard if box area > 30% of total frame area                 │
+│    (prevents huge false boxes covering entire scene)             │
+│                                                                  │
+│  Filter 5 — Aspect ratio:                                        │
+│    aspect = box_width / box_height                               │
+│    Discard if aspect < 0.3  (too tall/thin)                      │
+│    Discard if aspect > 3.0  (too wide/flat)                      │
+│    (potholes are roughly equant or slightly wide)                │
+└───────────────────────────┬──────────────────────────────────────┘
+                            │
+                            ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                  NON-MAXIMUM SUPPRESSION (nms)                   │
+│  • Sort boxes by confidence (descending)                         │
+│  • Greedy pick: always keep the highest-confidence box           │
+│  • Remove overlapping boxes where IoU > IOU_THRES (0.4)          │
+│  • Repeat until box list is empty                                │
+│                                                                  │
+│    IoU = Intersection Area / Union Area                          │
+│                                                                  │
+│  Purpose: deduplicate multiple detections on same pothole        │
+└───────────────────────────┬──────────────────────────────────────┘
+                            │
+                            ▼
+┌──────────────────────────────────────────────────────────────────┐
+│              TEMPORAL VOTING (MultiFrameVoter)                   │
+│  Imported from: temporal_voting.py (parent project)              │
+│                                                                  │
+│  • Maintains a sliding window of the last 3 frames               │
+│  • Detection confirmed only if ≥ 2 of 3 frames detect something  │
+│  • Window size = 3,  vote threshold = 2  (configurable)          │
+│  • Rejects single-frame camera glitches / lighting artifacts     │
+│  • No "sticky latch" — clean binary output each frame            │
+└───────────────────────────┬──────────────────────────────────────┘
+                            │
+                ┌───────────┴──────────────┐
+                │                          │
+                ▼                          ▼
+┌──────────────────────────┐  ┌────────────────────────────────────┐
+│    VISUALISATION (draw)  │  │   DETECTION LOGGING (log_detection)│
+│                          │  │                                    │
+│ • Green boxes on frame   │  │ Triggered only when BOTH:          │
+│   for every detection    │  │   confirmed=True AND detections>0  │
+│ • "POTHOLE X.XX" label   │  │                                    │
+│   above each box         │  │ Outputs:                           │
+│ • Red "POTHOLE DETECTED!"│  │  .log  — Python logging (INFO)     │
+│   banner at top-left     │  │  .csv  — row per confirmed event   │
+│ • HUD (bottom of frame): │  │  .db   — SQLite WAL, buffered 10x  │
+│   – FPS (cyan)           │  │  .jpg  — JPEG snapshot of frame    │
+│   – Frame # (yellow)     │  │          (85% quality)             │
+│   – Total dets (magenta) │  │                                    │
+│   – Proc time ms (orange)│  │ Columns logged:                    │
+│ • Resized to 640×360     │  │  timestamp, frame_id, num_boxes,   │
+│   for stable display     │  │  max_conf, boxes_json, fps,        │
+│ • Window: "Pothole       │  │  process_ms                        │
+│   Detection"             │  │                                    │
+└──────────────────────────┘  └────────────────────────────────────┘
+                            │
+                            ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                       FPS THROTTLE                               │
+│  • TARGET_FRAME_TIME = 1.0 / 5 = 200 ms                          │
+│  • Sleep remainder after each loop iteration                     │
+│  • cv2.waitKey handles both sleep and key press check            │
+│  • Console log every 2 seconds: frame/fps/proc/detections        │
+└──────────────────────────────────────────────────────────────────┘
+                            │
+                 [q pressed / Ctrl+C / pipe closed]
+                            ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                    CLEAN SHUTDOWN (finally)                      │
+│  1. cam_proc.terminate() + cam_proc.wait()  — kill rpicam-vid    │
+│  2. cv2.destroyAllWindows()                                      │
+│  3. Flush SQLite buffer, close CSV file                          │
+│  4. Write summary_<SESSION>.json                                 │
+│  5. Print final statistics to console                            │
+└──────────────────────────────────────────────────────────────────┘
 ```
 ---
 
