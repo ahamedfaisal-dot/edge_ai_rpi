@@ -643,8 +643,6 @@ Where:
 
 ---
 
----
-
 ## Notes
 
 ### Important Considerations
