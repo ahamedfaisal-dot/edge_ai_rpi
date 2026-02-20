@@ -487,13 +487,13 @@ python runvid.py
 ### Expected Output
 
 ```
-✅ Model: best.onnx (320x320)
-✅ Inference size: 320x320
-✅ Target FPS: 5
-✅ Video opened: pothole2.mp4
+-> Model: best.onnx (320x320)
+-> Inference size: 320x320
+-> Target FPS: 5
+-> Video opened: pothole2.mp4
 
-🚀 OPTIMIZED FOR 5 FPS
-📊 Frame scale: 0.45
+-> OPTIMIZED FOR 5 FPS
+-> Frame scale: 0.45
 Press 'q' to quit
 
 Frame 30: Found 2 potholes
@@ -656,19 +656,6 @@ Where:
 5. **Error Handling**: Graceful fallback for model loading failures.
 
 ---
-
-## Authors
-
-Ahamed Faisal A
-
-Sanji krishna MP
-
-Subiksha A
-
-
-**Last Updated**: 2026-02-09
-
-**Project Status**: Active Development
 
 **Target Hardware**: Raspberry Pi 4 Model B
 
