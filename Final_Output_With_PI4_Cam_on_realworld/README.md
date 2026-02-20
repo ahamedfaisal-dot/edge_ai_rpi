@@ -387,23 +387,23 @@ Every run creates a unique `SESSION_ID = YYYYMMDD_HHMMSS` and writes:
 ## Output — Console
 
 ```
-✅ Model: best.onnx (320x320)
-✅ Inference size : 320x320
-✅ Target FPS     : 5
-✅ Conf threshold : 0.4  ← raised to reduce false positives
-🎥 Starting rpicam-vid …
-✅ rpicam-vid started | 640x480 @ 5fps
+-> Model: best.onnx (320x320)
+-> Inference size : 320x320
+-> Target FPS     : 5
+-> Conf threshold : 0.4  ← raised to reduce false positives
+-> Starting rpicam-vid …
+-> rpicam-vid started | 640x480 @ 5fps
 
-🚀 Running | FPS=5 | scale=0.45 | conf>=0.4
+-> Running | FPS=5 | scale=0.45 | conf>=0.4
 Press Ctrl+C or 'q' to quit
 
 Frame   110 | FPS: 5 | Proc: 138ms | Total detections: 2
 Frame   120: 1 pothole(s) confirmed
 Frame   160 | FPS: 5 | Proc: 135ms | Total detections: 3
 ...
-✅ Stopped by user
+-> Stopped by user
 
-📊 Final Statistics:
+-> Final Statistics:
    Total frames    : 320
    Total time      : 64.0s
    Average FPS     : 5.0
@@ -411,7 +411,7 @@ Frame   160 | FPS: 5 | Proc: 135ms | Total detections: 3
    Avg processing  : 137ms
    Model           : best.onnx (320x320)
    Logs saved to   : ../logs
-✅ Done!
+-> Done!
 ```
 
 ---
@@ -462,16 +462,3 @@ cd edge_ai_rpi/with_pi_cam
 # 5. Run
 python run_with_pi_cam.py
 ```
-
----
-
-## Authors
-
-Ahamed Faisal A
-Sanji Krishna M P
-Subiksha A
-
-**Target Hardware:** Raspberry Pi 4
-**Camera:** Raspberry Pi Camera Module v2 (IMX219, CSI)
-**Camera Tool:** `rpicam-vid` (built-in to Raspberry Pi OS)
-**Project Status:** Active Development
