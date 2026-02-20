@@ -37,7 +37,7 @@ This repository contains three major pipeline stages across different branches:
 - Statistical anomaly fallback
 - Edge deployment optimized
 
-> **Output videos and performance results from all pipeline stages running on Raspberry Pi 4 hardware are documented in the [`Output_videos_in_PI4`](.PI4-Output-for-Footage-Video) folder.**
+> **Output videos and performance results from all pipeline stages running on Raspberry Pi 4 hardware are documented in the [`Output_videos_in_PI4`](Output_videos_in_PI4) folder.**
 
 ---
 
