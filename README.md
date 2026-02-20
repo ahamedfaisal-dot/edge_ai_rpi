@@ -6,7 +6,7 @@ This project implements a real-time pothole and road anomaly detection system op
 ---
 The main branch represents the final optimized pipeline after multiple architectural iterations, focusing on speed, robustness, and deployment readiness.
 ---
-## Anomolys Our Project will detect
+## Anomalies Our Project will detect
 The proposed system is designed to detect multiple categories of road surface anomalies, including longitudinal cracks, transverse cracks, alligator cracks, and potholes. These damage types are commonly classified into different severity levels such as D00, D10, D20, and D40, representing increasing degrees of structural deterioration. Longitudinal and transverse cracks indicate surface-level stress and material fatigue, while alligator cracks represent interconnected crack patterns caused by repeated vehicular loading. Potholes correspond to severe surface failure resulting from prolonged crack propagation and environmental exposure. By accurately identifying and classifying these anomalies, the system enables efficient monitoring of road conditions and supports timely maintenance decisions.
 
 ---
