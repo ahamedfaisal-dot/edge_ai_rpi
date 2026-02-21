@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This project implements a real-time pothole and road anomaly detection system optimized for edge devices, specifically Raspberry Pi 4. The system uses an ONNX-based deep learning detector combined with structured post-processing, temporal voting, and statistical anomaly validation to achieve stable and efficient real-world performance.
+This project implements a road anomaly detection system optimized for edge devices, specifically Raspberry Pi 4. The system uses an ONNX-based deep learning detector combined with structured post-processing, temporal voting, and statistical anomaly validation to achieve stable and efficient real-world performance.
 ---
 The main branch represents the final optimized pipeline after multiple architectural iterations, focusing on speed, robustness, and deployment readiness.
 ---
