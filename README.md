@@ -8,6 +8,7 @@ This project implements a road anomaly detection system optimized for edge devic
 
 The main branch represents the final optimized pipeline after multiple architectural iterations, focusing on speed, robustness, and deployment readiness.
 
+final output : [View Real-World Bike Testing Video (Google Drive)](https://drive.google.com/file/d/1fmIOCZe0yc1K5nB2kklY15GKl-EBwTE5/view?usp=sharing)
 ---
 ## Anomalies Our Project will detect
 
